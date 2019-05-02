@@ -1,12 +1,15 @@
 module par.thread
 
+import std.compilerInfo
 import config
 import std.newDelete
 //import assert
 
+datatype NativeThreadHandle = ULong
+
 //! Datatype describing a thread ID
 datatype ThreadId
-    id: ULong
+    id: NativeThreadHandle
 
 fun ctor(this: @ThreadId, id: ULong)
     this.id ctor id
@@ -16,7 +19,13 @@ fun ctor(this: @ThreadId, h: NativeThreadHandle)
 fun >>(tid: @ThreadId, os: @OutStream)
     os << tid.id
 
+[ct] if platformName == "Darwin"
+    fun ctor(this: @ThreadId, h: NativeThreadHandle)
+        this.id ctor
+        _Impl.pthread_threadid_np(h, id)
 
+fun >>(tid: @ThreadId, os: @OutStream)
+    os << tid.id
 
 datatype Thread
     _handle: NativeThreadHandle
@@ -66,14 +75,14 @@ fun detach(t: @Thread)
     t._handle = NativeThreadHandle()
 
 //! Get the ID of the given thread
-fun getId(t: Thread): ThreadId = ThreadId(t._handle)
+//fun getId(t: Thread): ThreadId = ThreadId(t._handle)
 
 //! Get the native handle of the given thread
-fun getNativeHandle(t: Thread): NativeThreadHandle = t._handle
+//fun getNativeHandle(t: Thread): NativeThreadHandle = t._handle
 
 
 //! Get the current thread id
-fun curThreadId: ThreadId = ThreadId(NativeThreadHandle())
+//fun curThreadId: ThreadId = ThreadId(NativeThreadHandle())
 
 //! Tries to suspend the current thread to let other threads execute
 fun yield = _Impl.sched_yield()
@@ -110,13 +119,21 @@ package _Impl
     [initCtor] datatype TimeSpec
         tv_sec, tv_nsec: Long
 
-    [native("pthread_create")] fun pthread_create(handle: @NativeThreadHandle, attr: @Byte, f: ThreadFun, arg: @Byte): Int;
-    [native("pthread_join")] fun pthread_join(handle: NativeThreadHandle, valPtr: @ @Byte): Int;
-    [native("pthread_detach")] fun pthread_detach(handle: NativeThreadHandle): Int;
-    [native("pthread_self")] fun pthread_self: NativeThreadHandle;
+    [ct] if platformName == "Darwin"
+        [native("pthread_create")] fun pthread_create(handle: @NativeThreadHandle, attr: @Byte, f: ThreadFun, arg: @Byte): Int
+        [native("pthread_join")] fun pthread_join(handle: NativeThreadHandle, valPtr: @ @Byte): Int
+        [native("pthread_detach")] fun pthread_detach(handle: NativeThreadHandle): Int
+        [native("pthread_self")] fun pthread_self: NativeThreadHandle
 
-    [native("pthread_threadid_np")] fun pthread_threadid_np(t: NativeThreadHandle, res: @ULong): Int;
+        [native("pthread_threadid_np")] fun pthread_threadid_np(t: NativeThreadHandle, res: @ULong): Int
 
-    [native("sched_yield")] fun sched_yield;
-    [native("nanosleep")] fun nanosleep(req, rem: @TimeSpec): Int;
+        [native("sched_yield")] fun sched_yield
+        [native("nanosleep")] fun nanosleep(req, rem: @TimeSpec): Int
+    else
+        [native("pthread_create")] fun pthread_create(handle: @NativeThreadHandle, attr: @Byte, f: ThreadFun, arg: @Byte): Int
+        [native("pthread_join")] fun pthread_join(handle: NativeThreadHandle, valPtr: @ @Byte): Int
+        [native("pthread_detach")] fun pthread_detach(handle: NativeThreadHandle): Int
+        [native("pthread_self")] fun pthread_self: NativeThreadHandle
 
+        [native("sched_yield")] fun sched_yield
+        [native("nanosleep")] fun nanosleep(req, rem: @TimeSpec): Int

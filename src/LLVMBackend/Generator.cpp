@@ -210,6 +210,7 @@ void generateNativeObjGCC(
     args.insert(args.end(), s.linkerArgs_.begin(), s.linkerArgs_.end());
     args.insert(args.end(), {inputFilename, "-o", outputFilename});
     args.emplace_back("-lm"); // link against the math library
+    args.emplace_back("-pthread");
     runCmd(args);
 }
 } // namespace

@@ -70,4 +70,4 @@ package _Impl
         [native("sem_close")]       fun sem_close(sem: @SemaphoreT): Int
         [native("sem_unlink")]      fun sem_unlink(name: @Char): Int
         [native("sem_open")]        fun sem_open(name: @Char, oflag: Int): @SemaphoreT
-        [native("sem_open")]        fun sem_open(name: @Char, oflag: Int, mode: ModeT, value: UInt): @SemaphoreT
+        [native("sem_open")]        fun sem_open(name: @Char, oflag: Int, mode: ModeT, value: UInt): @SemaphoreT 
